@@ -3,16 +3,21 @@ header("Access-Control-Allow-Origin: *");
 header("Access-Control-Allow-Methods: GET, POST, OPTIONS, DELETE, PUT");
 header("Access-Control-Allow-Headers: Content-Type");
 
-session_start(); // Inicia a sessão
-
 class Conta {
     private $contas;
+    private $file;
 
     public function __construct() {
-        if(!isset($_SESSION['contas'])) {
-            $_SESSION['contas'] = array();
+        $this->file = 'contas.json';
+        if(file_exists($this->file)) {
+            $this->contas = json_decode(file_get_contents($this->file), true);
+        } else {
+            $this->contas = array();
         }
-        $this->contas = &$_SESSION['contas']; // Referência à variável de sessão
+    }
+
+    public function salvarContas() {
+        file_put_contents($this->file, json_encode($this->contas));
     }
 
     public function criarConta($accountId) {
@@ -47,6 +52,9 @@ class Conta {
                 "balance" => $this->contas[$accountId]["balance"]
             )
         );
+
+        $this->salvarContas();
+
         return json_encode($response);
     }
 
@@ -66,6 +74,9 @@ class Conta {
                 "balance" => $this->contas[$accountId]["balance"]
             )
         );
+
+        $this->salvarContas();
+
         return json_encode($response);
     }
 
@@ -99,11 +110,16 @@ class Conta {
                 "balance" => $this->contas[$destination]["balance"]
             )
         );
+
+        $this->salvarContas();
+
         return json_encode($response);
     }
 
     public function reset() {
-        session_destroy();
+        if (file_exists($this->file)) {
+            unlink($this->file);
+        }
         $this->contas = array();
     }
 }
